@@ -2,11 +2,9 @@ This repository includes additional and localisation files used in MIUI India RO
 
 ---------------------------------------------------------------------------------------------
 
-MIUI Australia V4 Extras Repository by MIUI Australia is licensed under a Creative Commons Attribution 4.0 International License.
+MIUI India V5 Extras Repository by MIUI India and MIUI Australia is licensed under a Creative Commons Attribution 4.0 International License.
 
-Based on a work at http://github.com/BurgerZ/MIUI-v4-extra.
-
-Permissions beyond the scope of this license may be available at http://miuiaustralia.com/community.
+Permissions beyond the scope of this license may be available at http://www.miui-india.in/contact-us/.
 
 ---------------------------------------------------------------------------------------------
 
