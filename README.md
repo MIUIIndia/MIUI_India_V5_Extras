@@ -1,4 +1,4 @@
-This repository includes additional and localisation files used in MIUI India ROMs V5 and later.
+This repository includes additional and localisation files used in V5 MIUI India ROMs.
 
 ---------------------------------------------------------------------------------------------
 
