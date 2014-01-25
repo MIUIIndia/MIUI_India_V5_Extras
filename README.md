@@ -10,5 +10,5 @@ Permissions beyond the scope of this license may be available at http://miuiaust
 
 ---------------------------------------------------------------------------------------------
 
-Changelog:
-CodyLogs: Improved GPS lock speed for India
+Changelog:<br>
+CodyLogs: Improved GPS lock speed for India<br>
