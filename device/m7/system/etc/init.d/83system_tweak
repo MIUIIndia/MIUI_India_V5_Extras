@@ -1,0 +1,257 @@
+#!/sbin/busybox sh
+#ThunderBolt!
+#Credits:
+# zacharias.maladroit
+# voku1987
+# collin_ph@xda
+# TAKE NOTE THAT LINES PRECEDED BY A "#" IS COMMENTED OUT!
+
+# ==============================================================
+# ==============================================================
+# ==============================================================
+# I/O related tweaks 
+# ==============================================================
+# ==============================================================
+# ==============================================================
+
+# Optimize non-rotating storage; 
+for i in $STL $BML $MMC $ZRM $MTD;
+do
+	#IMPORTANT!
+	if [ -e $i/queue/rotational ]; 
+	then
+		echo 0 > $i/queue/rotational; 
+	fi;
+	if [ -e $i/queue/nr_requests ];
+	then
+		echo 8192 > $i/queue/nr_requests; # for starters: keep it sane
+	fi;
+	#CFQ specific
+	if [ -e $i/queue/iosched/back_seek_penalty ];
+	then 
+		echo 1 > $i/queue/iosched/back_seek_penalty;
+	fi;
+	#CFQ specific
+	if [ -e $i/queue/iosched/low_latency ];
+	then
+		echo 1 > $i/queue/iosched/low_latency;
+	fi;
+	#CFQ Specific
+	if [ -e $i/queue/iosched/slice_idle ];
+	then 
+		echo 1 > $i/queue/iosched/slice_idle; # previous: 1
+	fi;
+	# deadline/VR/SIO scheduler specific
+	if [ -e $i/queue/iosched/fifo_batch ];
+	then
+		echo 4 > $i/queue/iosched/fifo_batch;
+	fi;
+	if [ -e $i/queue/iosched/writes_starved ];
+	then
+		echo 1 > $i/queue/iosched/writes_starved;
+	fi;
+	#CFQ specific
+	if [ -e $i/queue/iosched/quantum ];
+	then
+		echo 8 > $i/queue/iosched/quantum;
+	fi;
+	#VR Specific
+	if [ -e $i/queue/iosched/rev_penalty ];
+	then
+		echo 1 > $i/queue/iosched/rev_penalty;
+	fi;
+	if [ -e $i/queue/rq_affinity ];
+	then
+	echo "1"   >  $i/queue/rq_affinity;   
+	fi;
+#disable iostats to reduce overhead  # idea by kodos96 - thanks !
+	if [ -e $i/queue/iostats ];
+	then
+		echo "0" > $i/queue/iostats;
+	fi;
+# Optimize for read- & write-throughput; 
+# Optimize for readahead; 
+	if [ -e $i/queue/read_ahead_kb ];
+	then
+		echo "256" >  $i/queue/read_ahead_kb;
+	fi;
+# Commented out nomerges (Merges are good). max_sectors_kb to default - don't tweak it
+#          echo "0"   >  $i/queue/nomerges
+#          echo "128" >  $i/queue/max_sectors_kb
+	
+done;
+# Specifically for NAND devices where reads are faster than writes, writes starved 2:1 is good
+for i in $STL $BML $ZRM $MTD;
+do
+	if [ -e $i/queue/iosched/writes_starved ];
+	then
+		echo 2 > $i/queue/iosched/writes_starved;
+	fi;
+done;
+
+
+
+# =========
+# TWEAKS: raising read_ahead_kb cache-value for mounts that are sdcard-like to 1024 
+# =========
+
+if [ -e /sys/devices/virtual/bdi/179:0/read_ahead_kb ];
+then
+    echo "1024" > /sys/devices/virtual/bdi/179:0/read_ahead_kb;
+fi;
+	
+if [ -e /sys/devices/virtual/bdi/179:16/read_ahead_kb ];
+  then
+    echo "1024" > /sys/devices/virtual/bdi/179:16/read_ahead_kb;
+fi;
+
+if [ -e /sys/devices/virtual/bdi/179:32/read_ahead_kb ];
+  then
+    echo "1024" > /sys/devices/virtual/bdi/179:32/read_ahead_kb;
+fi;
+
+if [ -e /sys/devices/virtual/bdi/179:48/read_ahead_kb ];
+  then
+    echo "1024" > /sys/devices/virtual/bdi/179:48/read_ahead_kb;
+fi;
+
+if [ -e /sys/devices/virtual/bdi/default/read_ahead_kb ];
+  then
+    echo "256" > /sys/devices/virtual/bdi/default/read_ahead_kb;
+fi;
+
+
+# Remount all partitions with noatime
+for k in $(busybox mount | grep relatime | cut -d " " -f3);
+do
+#sync;
+busybox mount -o remount,noatime $k;
+done;
+
+
+# ==============================================================
+# ==============================================================
+# ==============================================================
+# VFS, VM settings
+# ==============================================================
+# ==============================================================
+# ==============================================================
+echo $((96*1024*1024)) > /sys/block/zram0/disksize
+
+
+
+# ==============================================================
+# ==============================================================
+# ==============================================================
+# EXT
+# ==============================================================
+# ==============================================================
+# ==============================================================
+
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep system | awk '{print $1}')
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep data | awk '{print $1}')
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep cache | awk '{print $1}')
+
+# =========
+# TWEAKS: for TCP read/write
+# =========
+
+sysctl -w net.ipv4.tcp_timestamps=0;
+sysctl -w net.ipv4.tcp_tw_reuse=1;
+sysctl -w net.ipv4.tcp_sack=1;
+sysctl -w net.ipv4.tcp_dsack=1;
+sysctl -w net.ipv4.tcp_tw_recycle=1;
+sysctl -w net.ipv4.tcp_window_scaling=1;
+sysctl -w net.ipv4.tcp_keepalive_probes=5;
+sysctl -w net.ipv4.tcp_keepalive_intvl=30;
+sysctl -w net.ipv4.tcp_fin_timeout=30;
+sysctl -w net.ipv4.tcp_moderate_rcvbuf=1;
+
+
+# ==============================================================
+# ==============================================================
+# ==============================================================
+# network security related settings
+# ==============================================================
+# ==============================================================
+# ==============================================================
+
+sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1;
+if [ -e /proc/sys/net/ipv6/icmp_echo_ignore_broadcasts ]
+then
+	echo "1" >  /proc/sys/net/ipv6/icmp_echo_ignore_broadcasts; # default
+fi;
+
+# Ignore all kinds of icmp packets or pings:
+sysctl -w net.ipv4.icmp_echo_ignore_all=1;
+if [ -e /proc/sys/net/ipv6/icmp_echo_ignore_all ]
+then
+	echo "1" >  /proc/sys/net/ipv6/icmp_echo_ignore_all; # default: 0
+fi;
+# Some routers send invalid responses to broadcast frames, and each one generates a
+# warning that is logged by the kernel. These responses can be ignored:
+sysctl -w net.ipv4.icmp_ignore_bogus_error_responses=1;
+if [ -e /proc/sys/net/ipv6/icmp_ignore_bogus_error_responses ]
+then
+	echo "1" >  /proc/sys/net/ipv6/icmp_ignore_bogus_error_responses;
+fi;
+# When the server is heavily loaded or has many clients with bad connections with high
+# latency, it can result in an increase in half-open connections. This is common for Web
+# servers, especially when there are a lot of dial-up users. These half-open connections are
+# stored in the backlog connections queue. You should set this value to at least 4096. (The
+# default is 1024.)
+# Setting this value is useful even if your server does not receive this kind of connection,
+# because it can still be protected from a DoS (syn-flood) attack.
+sysctl -w net.ipv4.tcp_max_syn_backlog=4096; # default: 128
+
+# Commented out - Use the kernel defaults instead
+#echo 2 > /proc/sys/net/ipv4/tcp_synack_retries; # default: 5
+
+# Increase the number of outstanding syn requests allowed.
+# Note: some people (including myself) have used tcp_syncookies to handle the problem of too many legitimate outstanding SYNs. 
+sysctl -w net.core.netdev_max_backlog=2500;
+
+# While TCP SYN cookies are helpful in protecting the server from syn-flood attacks, both
+# denial-of-service (DoS) or distributed denial-of-service (DDoS), they could have an
+# adverse effect on performance. We suggest enabling TCP SYN cookies only when there is
+# a clear need for them.
+
+# disabling syncookies
+sysctl -w net.ipv4.tcp_syncookies=0;
+
+sysctl -w net.ipv4.ip_dynaddr=0;
+
+
+
+
+# ==============================================================
+# ==============================================================
+# ==============================================================
+# general phone/RIL-related settings
+# ==============================================================
+# ==============================================================
+# ==============================================================
+
+# Seems to give undesired effect on certain phones. Commenting out.
+# For HSDPA low throughput
+setprop ro.ril.disable.power.collapse = 1
+
+ =========
+ TWEAKS: overall
+ =========
+setprop ro.telephony.call_ring.delay 25; # let's minimize the time Android waits until it rings on a call
+setprop dalvik.vm.startheapsize 8m;
+if [ "`getprop dalvik.vm.heapsize | sed 's/m//g'`" -lt 64 ];then
+	setprop dalvik.vm.heapsize 128m; # leave that setting to cyanogenmod settings or uncomment it if needed
+fi;
+setprop wifi.supplicant_scan_interval 120; # higher is not recommended, scans while not connected anyway so shouldn't affect while connected
+if  [ -z "`getprop windowsmgr.max_events_per_sec`"  ] || [ "`getprop windowsmgr.max_events_per_sec`" -lt 60 ];then
+	setprop windowsmgr.max_events_per_sec 240; # smoother GUI
+fi;
+
+sysctl -w kernel.sem="500 512000 100 2048";
+sysctl -w kernel.shmmax=268435456;
+sysctl -w kernel.msgmni=1024;
+
+echo 1536,2048,3584,5120,8704,10240 > /sys/module/lowmemorykiller/parameters/minfree
+
