@@ -11,3 +11,4 @@ Permissions beyond the scope of this license may be available at http://www.miui
 Changelog:<br>
 CodyLogs: Improved GPS lock speed for India [25/01/2014]<br>
 CodyLogs: Updated icon pack [25/01/2014]<br>
+CodyLogs: Updated icon pack [26/01/2014]<br>
