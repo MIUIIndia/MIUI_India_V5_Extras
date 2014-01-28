@@ -13,3 +13,4 @@ CodyLogs: Improved GPS lock speed for India [25/01/2014]<br>
 CodyLogs: Updated icon pack [25/01/2014]<br>
 CodyLogs: Updated icon pack [27/01/2014]<br>
 CodyLogs: init.d is now only for m0 and m7 [27/01/2014]<br>
+RohitGh: Removed MIUI-India.apk [28/01/2014]<br>
