@@ -17,3 +17,4 @@ RohitGh: Removed MIUI-India.apk [28/01/2014]<br>
 RohitGh: Added init.d scripts for MTK based devices [28/01/2014]<br>
 CodyLogs: Removed init.d from m7 [28/01/2014]<br>
 CodyLogs: Removed init.d from m0 [28/01/2014]<br>
+CodyLogs: Improved GPS lock speed for India even more [29/01/2014]<br>
